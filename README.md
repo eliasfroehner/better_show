@@ -1,7 +1,6 @@
 # BetterShow
 
-Library for the [ODROID-SHOW](http://www.hardkernel.com/main/products/prdt_info.php?g_code=G139781817221) written in Ruby
-
+Library for the ODROID-SHOW/ODROID-SHOW2 written in Ruby
 
 ## Installation
 
@@ -24,6 +23,10 @@ Or install it yourself as (will be uploaded to RubyGems.org if release is stable
 ```ruby
 require 'better_show'
 ```
+
+## Supports
+* [ODROID-SHOW](http://www.hardkernel.com/main/products/prdt_info.php?g_code=G139781817221)
+* [ODROID-SHOW2](http://www.hardkernel.com/main/products/prdt_info.php?g_code=G141743018597)
 
 ## Development
 
