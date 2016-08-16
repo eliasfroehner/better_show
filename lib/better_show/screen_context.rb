@@ -25,7 +25,26 @@ module BetterShow
       @buffer = ""
 
       @characters_on_current_row = 0
-      @orientation = Screen.VERTICAL
+      @orientation = Screen::VERTICAL
+      @text_size = 2
+
+      create_vt100_functions!
+    end
+
+    def create_vt100_functions!
+      # VT100 FUNCTIONS
+      # SIMPLE
+      define_vt100_function :new_line, "\n"
+      define_vt100_function :carriage_return, "\r"
+
+      define_vt100_function :cursor_down, "\eD"
+      define_vt100_function :cursor_down_row_one, "\eE"
+      define_vt100_function :cursor_up, "\eM"
+      define_vt100_function :reset_lcd, "\ec"
+      define_vt100_function :erase_screen, "\e[2J"
+
+      define_vt100_function :save_cursor_position, "\e[s"
+      define_vt100_function :restore_cursor_position, "\e[u"
     end
 
     # Connect to ODROID-SHOW
@@ -43,6 +62,7 @@ module BetterShow
       set_text_size(2)
       set_rotation(1)
       carriage_return
+      flush! if buffered_write
 
       @device = nil
     end
@@ -70,18 +90,7 @@ module BetterShow
     # @param str String to write_raw_sequence
     # @param params Optional params => eg.: {:foreground => :red, :background => :white}
     def write_line(str, params)
-      empty_line_count = get_columns() - ((str.length + @characters_on_current_row) % get_columns())
-
-      buffer_text = str
-
-      empty_line = ""
-      (0..empty_line_count).times do
-        empty_line += " "
-
-        buffer_text += empty_line
-
-        write_text(buffer_text, params)
-      end
+      write_text(str.ljust(get_columns), params)
     end
 
     # Writes string to buffer if buffered mode, else directly to device
@@ -97,53 +106,39 @@ module BetterShow
     # Erase specified amount of rows starting from a specified row
     def erase_rows(start=0, rows=10)
       cursor_to_home
-      (0..start).times do
+      (0..start).each do
         linebreak
       end
 
-      (0..rows).times do
-        columns = self.get_columns()
-        empty_line = ""
-
-        (0..columns).times do
-          empty_line += " "
-          write_raw_sequence(empty_line)
-        end
+      columns = get_columns
+      (start..rows).each do
+        write_raw_sequence("".ljust(get_columns))
       end
     end
 
     # Returns the amount of columns, depending on the current text size
     def get_columns
-      if self.orientation == Screen.HORIZONTAL
-        Screen.WIDTH / (@text_size * 6)
+      if @orientation == Screen::HORIZONTAL
+        Screen::WIDTH / (@text_size * 6)
       else
-        Screen.HEIGHT / (@text_size * 6)
+        Screen::HEIGHT / (@text_size * 6)
       end
     end
 
     # Returns the amount of rows, depending on the current text size
     def get_rows
-      if self.orientation == Screen.HORIZONTAL
-        Screen.HEIGHT / (@text_size * 8)
+      if @orientation == Screen::HORIZONTAL
+        Screen::HEIGHT / (@text_size * 8)
       else
-        Screen.WIDTH / (@text_size * 8)
+        Screen::WIDTH / (@text_size * 8)
       end
     end
 
-
-    # VT100 FUNCTIONS
-    # SIMPLE
-    vt100_function :new_line, "\n"
-    vt100_function :carriage_return, "\r"
-
-    vt100_function :cursor_down, "\eD"
-    vt100_function :cursor_down_row_one, "\eE"
-    vt100_function :cursor_up, "\eM"
-    vt100_function :reset_lcd, "\ec"
-    vt100_function :erase_screen, "\e[2J"
-
-    vt100_function :save_cursor_position, "\e[s"
-    vt100_function :restore_cursor_position, "\e[u"
+    def define_vt100_function(function_name, sequence)
+      define_singleton_method(function_name) do
+        write_raw_sequence(sequence)
+      end
+    end
 
     # EXTENDED
     def keyboard_arrow_up(position)
@@ -203,8 +198,8 @@ module BetterShow
 
     # New line
     def linebreak
-      new_line
       carriage_return
+      new_line
       @characters_on_current_row = 0
     end
 
@@ -220,6 +215,10 @@ module BetterShow
       cursor_to_home
     end
 
+    def clear_buffer!
+      @buffer = "" if buffered_write
+    end
+
     # DEVICE FUNCTIONS
     # Flushes buffer => writes to device
     def flush!
@@ -227,7 +226,7 @@ module BetterShow
     end
 
     # @param str Commandsequence (if nil buffer will be written)
-    def write_to_device!(str)
+    def write_to_device!(str=nil)
       raise NoConnectionError, "You need to connect to device before transmitting data!" unless @device
 
       command_str = str ? str : buffer
@@ -246,14 +245,12 @@ module BetterShow
 
         @device.write(chunk)
       end
+
+      clear_buffer!
     end
 
     private
     # Generic function definition for VT100 Functions
-    def vt100_function(function, sequence)
-      define_method(function) do
-        write_raw_sequence(sequence)
-      end
-    end
+
   end
 end
