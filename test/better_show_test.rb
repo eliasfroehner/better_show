@@ -1,4 +1,5 @@
 require 'test_helper'
+require 'digest/md5'
 
 class BetterShowTest < Minitest::Test
   def test_that_it_has_a_version_number
@@ -212,6 +213,13 @@ class BetterShowTest < Minitest::Test
     @ctx.draw_dot(1, 2)
 
     assert_equal "\e[1;P2x", @ctx.buffer
+  end
+
+  def test_draw_image
+    @ctx = BetterShow::ScreenContext.new
+    @ctx.draw_image("test/files/penguin.raw")
+
+    assert_equal "e85e78d3a4e8ea4a7b47399955a39b64", Digest::MD5.hexdigest(@ctx.buffer) #header + data
   end
 
   def test_reset_screen

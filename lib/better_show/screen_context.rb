@@ -178,9 +178,9 @@ module BetterShow
       write_raw_sequence("\e[%sr" % rotation)
 
       if rotation % 2 == 0
-        @orientation = :vertical
+        @orientation = Screen::VERTICAL
       else
-        @orientation = :horizontal
+        @orientation = Screen::HORIZONTAL
       end
     end
 
@@ -200,6 +200,18 @@ module BetterShow
     # Draw dot at x,y
     def draw_dot(x, y)
       write_raw_sequence("\e[%d;P%dx" % [x, y])
+    end
+
+    # Draws an RGB 565 image
+    def draw_image(image_path, offset_x = 0, offset_y = 0, width = 240, height = 320)
+      if @orientation == Screen::VERTICAL
+        props = [offset_x, offset_y, width, height]
+      else
+        props = [offset_x, offset_y, height, width]
+      end
+
+      write_raw_sequence("\e[%d;%d,%d;%di" % props)
+      write_raw_sequence(File.binread(image_path))
     end
 
     # Reset screen full
@@ -244,7 +256,7 @@ module BetterShow
     end
 
     private
-    
+
     # Generic function definition for VT100 Functions
     def define_vt100_function(function_name, sequence)
       define_singleton_method(function_name) do
