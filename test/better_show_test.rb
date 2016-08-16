@@ -141,49 +141,49 @@ class BetterShowTest < Minitest::Test
     @ctx = BetterShow::ScreenContext.new
     @ctx.keyboard_arrow_up(1)
 
-    assert_equal "\e[P1A", @ctx.buffer
+    assert_equal "\e[1A", @ctx.buffer
   end
 
   def test_keyboard_arrow_down
     @ctx = BetterShow::ScreenContext.new
     @ctx.keyboard_arrow_down(1)
 
-    assert_equal "\e[P1B", @ctx.buffer
+    assert_equal "\e[1B", @ctx.buffer
   end
 
   def test_keyboard_arrow_right
     @ctx = BetterShow::ScreenContext.new
     @ctx.keyboard_arrow_right(1)
 
-    assert_equal "\e[P1C", @ctx.buffer
+    assert_equal "\e[1C", @ctx.buffer
   end
 
   def test_keyboard_arrow_left
     @ctx = BetterShow::ScreenContext.new
     @ctx.keyboard_arrow_left(1)
 
-    assert_equal "\e[P1D", @ctx.buffer
+    assert_equal "\e[1D", @ctx.buffer
   end
 
   def test_set_cursor_position
     @ctx = BetterShow::ScreenContext.new
     @ctx.set_cursor_position(1, 2)
 
-    assert_equal "\e[P1;P2H", @ctx.buffer
+    assert_equal "\e[1;P2H", @ctx.buffer
   end
 
   def test_set_backlight_brightness_pwm
     @ctx = BetterShow::ScreenContext.new
     @ctx.set_backlight_brightness_pwm(240)
 
-    assert_equal "\e[P240q", @ctx.buffer
+    assert_equal "\e[240q", @ctx.buffer
   end
 
   def test_set_backlight_brightness_percent
     @ctx = BetterShow::ScreenContext.new
     @ctx.set_backlight_brightness_percent(10)
 
-    assert_equal "\e[P25q", @ctx.buffer
+    assert_equal "\e[25q", @ctx.buffer
   end
 
   def test_set_rotation
@@ -211,7 +211,7 @@ class BetterShowTest < Minitest::Test
     @ctx = BetterShow::ScreenContext.new
     @ctx.draw_dot(1, 2)
 
-    assert_equal "\e[P1;P2x", @ctx.buffer
+    assert_equal "\e[1;P2x", @ctx.buffer
   end
 
   def test_reset_screen

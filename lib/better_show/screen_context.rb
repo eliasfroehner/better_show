@@ -134,43 +134,37 @@ module BetterShow
       end
     end
 
-    def define_vt100_function(function_name, sequence)
-      define_singleton_method(function_name) do
-        write_raw_sequence(sequence)
-      end
-    end
-
     # EXTENDED
     def keyboard_arrow_up(position)
-      write_raw_sequence("\e[P%dA" % position)
+      write_raw_sequence("\e[%dA" % position)
     end
 
     def keyboard_arrow_down(position)
-      write_raw_sequence("\e[P%dB" % position)
+      write_raw_sequence("\e[%dB" % position)
     end
 
     def keyboard_arrow_right(position)
-      write_raw_sequence("\e[P%dC" % position)
+      write_raw_sequence("\e[%dC" % position)
     end
 
     def keyboard_arrow_left(position)
-      write_raw_sequence("\e[P%dD" % position)
+      write_raw_sequence("\e[%dD" % position)
     end
 
     # Set cursor to x, y
     def set_cursor_position(x, y)
-      write_raw_sequence("\e[P%d;P%dH" % [x, y])
+      write_raw_sequence("\e[%d;P%dH" % [x, y])
     end
 
     # Set backlight PWM 0 - 255
     def set_backlight_brightness_pwm(pwm)
-      write_raw_sequence("\e[P%dq" % pwm)
+      write_raw_sequence("\e[%dq" % pwm)
     end
 
     # Set backlight per Percentage 0 - 100%
     # Result will be rounded
     def set_backlight_brightness_percent(percent)
-      write_raw_sequence("\e[P%dq" % (2.55 * percent))
+      write_raw_sequence("\e[%dq" % (2.55 * percent))
     end
 
     # Set cursor to 0,0
@@ -205,7 +199,7 @@ module BetterShow
 
     # Draw dot at x,y
     def draw_dot(x, y)
-      write_raw_sequence("\e[P%d;P%dx" % [x, y])
+      write_raw_sequence("\e[%d;P%dx" % [x, y])
     end
 
     # Reset screen full
@@ -250,7 +244,12 @@ module BetterShow
     end
 
     private
+    
     # Generic function definition for VT100 Functions
-
+    def define_vt100_function(function_name, sequence)
+      define_singleton_method(function_name) do
+        write_raw_sequence(sequence)
+      end
+    end
   end
 end
