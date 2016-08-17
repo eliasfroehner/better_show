@@ -20,21 +20,8 @@ module BetterShow
       }
 
       # Checks if params contains :foreground and valid color
-      def self.color_exists?(params)
-        if params[:foreground]
-          COLORS[params[:foreground]]
-        else
-          false
-        end
-      end
-
-      # Checks if params contains :background and valid colormode
-      def self.color_mode_exists?(params)
-        if params[:background]
-          COLORS[params[:background]]
-        else
-          false
-        end
+      def self.color_exists?(color_sym)
+        COLORS[color_sym]
       end
     end
   end

@@ -1,5 +1,3 @@
-require 'rubyserial'
-
 module BetterShow
   # Implementation of ANSI/VT100 commands => http://odroid.com/dokuwiki/doku.php?id=en:show_using
   # Some code logic used from https://github.com/Matoking/SHOWtime/blob/master/context.py
@@ -7,9 +5,10 @@ module BetterShow
   class ScreenContext
     include BetterShow
 
-    class ConnectionError < RuntimeError
-    end
     class NoConnectionError < RuntimeError
+    end
+
+    class ColorError < RuntimeError
     end
 
     attr_accessor :device_port
@@ -18,15 +17,16 @@ module BetterShow
 
     # @param port Serialport
     # @param buffered All functions will be buffered => use flush to transmit to device
-    def initialize(port = "/dev/ttyUSB0", buffered = true)
+    def initialize(port: "/dev/ttyUSB0", buffered: true)
       @device_port = port
-      @device = nil
       @buffered_write = buffered
-      @buffer = ""
+      @buffer = []
 
       @characters_on_current_row = 0
       @orientation = Screen::VERTICAL
       @text_size = 2
+      @foreground_color = :white
+      @background_color = :black
 
       create_vt100_functions!
     end
@@ -47,41 +47,32 @@ module BetterShow
       define_vt100_function :restore_cursor_position, "\e[u"
     end
 
-    # Connect to ODROID-SHOW
-    def connect!
-      begin
-        @device = Serial.new @device_port, 500000
-      rescue RubySerial::Exception => e
-        raise ConnectionError, e.message
-      end
+    # Used in tests for compraing command sequence
+    def virtual_device
+      buffer.join
     end
 
     # Disconnect to ODROID-SHOW
-    def disconnect!
+    def reset!
       reset_lcd
       set_text_size(2)
       set_rotation(1)
       carriage_return
       flush! if buffered_write
-
-      @device = nil
     end
 
     # Writes string to device
     # @param str String to write_raw_sequence
     # @param params Optional params => eg.: {:foreground => :red, :background => :white}
-    def write_text(str, params = nil)
-      temp_str = ""
-      if params and params.kind_of? Hash
-        temp_str += "\e[%d%dm" % [ANSI::Color::COLOR_MODES[:background], ANSI::Color::COLORS[params[:background]]] if ANSI::Color.color_mode_exists?(params)
-        temp_str += "\e[%d%dm" % [ANSI::Color::COLOR_MODES[:foreground], ANSI::Color::COLORS[params[:foreground]]] if ANSI::Color.color_exists?(params)
+    def write_text(str)
+      # Serial port can not process more then 20 chars once
+      str_chunks = split_string_into_chunks(str, 20)
+      str_chunks.each do |chunk|
+        write_raw_sequence(chunk)
       end
-      temp_str += str
-
-      write_raw_sequence(temp_str)
 
       @characters_on_current_row += str.length
-      @characters_on_current_row = @characters_on_current_row % get_columns() if (@characters_on_current_row >= get_columns())
+      @characters_on_current_row = @characters_on_current_row % get_columns if (@characters_on_current_row >= get_columns)
     end
 
     # Prints provided text to screen and fills the
@@ -89,15 +80,15 @@ module BetterShow
     # overlapping text
     # @param str String to write_raw_sequence
     # @param params Optional params => eg.: {:foreground => :red, :background => :white}
-    def write_line(str, params)
-      write_text(str.ljust(get_columns), params)
+    def write_line(str)
+      write_text(str.ljust(get_columns))
     end
 
     # Writes string to buffer if buffered mode, else directly to device
     # @param command_str Commandsequence
     def write_raw_sequence(command_str)
       if buffered_write
-        @buffer += command_str
+        @buffer << command_str
       else
         write_to_device!(command_str)
       end
@@ -153,7 +144,7 @@ module BetterShow
 
     # Set cursor to x, y
     def set_cursor_position(x, y)
-      write_raw_sequence("\e[%d;P%dH" % [x, y])
+      write_raw_sequence("\e[%d;%dH" % [x, y])
     end
 
     # Set backlight PWM 0 - 255
@@ -170,7 +161,26 @@ module BetterShow
     # Set cursor to 0,0
     def cursor_to_home
       write_raw_sequence("\e[H")
+      # Glitches if not set again
+      set_foreground_color(@foreground_color)
+      set_background_color(@background_color)
       @characters_on_current_row = 0
+    end
+
+    # Sets foreground color for following text
+    def set_foreground_color(color_sym)
+      raise ColorError, "Invalid color: #{color_sym}" unless ANSI::Color.color_exists?(color_sym)
+
+      write_raw_sequence("\e[%d%dm" % [ANSI::Color::COLOR_MODES[:foreground], ANSI::Color::COLORS[color_sym]])
+      @foreground_color = color_sym
+    end
+
+    # Sets background color for following text
+    def set_background_color(color_sym)
+      raise ColorError, "Invalid color: #{color_sym}" unless ANSI::Color.color_exists?(color_sym)
+
+      write_raw_sequence("\e[%d%dm" % [ANSI::Color::COLOR_MODES[:background], ANSI::Color::COLORS[color_sym]])
+      @background_color = color_sym
     end
 
     # Set rotation of Display
@@ -199,7 +209,7 @@ module BetterShow
 
     # Draw dot at x,y
     def draw_dot(x, y)
-      write_raw_sequence("\e[%d;P%dx" % [x, y])
+      write_raw_sequence("\e[%d;%dx" % [x, y])
     end
 
     # Draws an RGB 565 image
@@ -221,8 +231,9 @@ module BetterShow
       cursor_to_home
     end
 
+    # Resets internal buffer
     def clear_buffer!
-      @buffer = "" if buffered_write
+      @buffer.clear if buffered_write
     end
 
     # DEVICE FUNCTIONS
@@ -233,29 +244,30 @@ module BetterShow
 
     # @param str Commandsequence (if nil buffer will be written)
     def write_to_device!(str=nil)
-      raise NoConnectionError, "You need to connect to device before transmitting data!" unless @device
+      raise NoConnectionError, "You need to connect to device before transmitting data!" unless File.exist? @device_port
 
       command_str = str ? str : buffer
-      # If the command sequence is longer than 20 characters sending it all at once
-      # will cause artifacts
-      command_chunks = command_str.scan(/.{20}/)
-      command_chunks.each do |chunk|
-        @device.write("\006") # BEGIN
-        ##### Length #####
-        @device.write(chunk.length + 48)
-        response = nil
-        while response != '6'
-          response = @device.read(1)
-          sleep(0.1)
+      if command_str.kind_of? String
+        File.write(@device_port, command_str)
+      else
+        command_str.each do |command|
+          File.write(@device_port, command)
+          sleep(command.length * 0.0045)
         end
-
-        @device.write(chunk)
+        clear_buffer!
       end
-
-      clear_buffer!
     end
 
     private
+    # SPlits string into chunks => ["abcd", "efgh", "123"]
+    def split_string_into_chunks(str, chunk_size)
+      arr = []
+      temp_str = str.dup
+      until temp_str.empty?
+        arr << temp_str.slice!(0..chunk_size)
+      end
+      arr
+    end
 
     # Generic function definition for VT100 Functions
     def define_vt100_function(function_name, sequence)
