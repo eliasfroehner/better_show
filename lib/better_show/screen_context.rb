@@ -63,7 +63,6 @@ module BetterShow
 
     # Writes string to device
     # @param str String to write_raw_sequence
-    # @param params Optional params => eg.: {:foreground => :red, :background => :white}
     def write_text(str)
       # Serial port can not process more then 20 chars once
       str_chunks = split_string_into_chunks(str, 20)
@@ -79,7 +78,6 @@ module BetterShow
     # rest of the line with empty space to prevent
     # overlapping text
     # @param str String to write_raw_sequence
-    # @param params Optional params => eg.: {:foreground => :red, :background => :white}
     def write_line(str)
       write_text(str.ljust(get_columns))
     end
