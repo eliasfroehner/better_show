@@ -22,7 +22,17 @@ Or install it yourself as (will be uploaded to RubyGems.org if release is stable
 
 ```ruby
 require 'better_show'
+
+@ctx = BetterShow::ScreenContext.new
+
+@ctx.erase_screen
+@ctx.set_rotation(BetterShow::Screen::ROTATION_NORTH)
+@ctx.set_background_color(:black)
+@ctx.set_foreground_color(:red)
+@ctx.write_line("Hello World!")
+@ctx.flush!
 ```
+For other examples look at the examples directory.
 
 ## Supports
 * [ODROID-SHOW](http://www.hardkernel.com/main/products/prdt_info.php?g_code=G139781817221)
