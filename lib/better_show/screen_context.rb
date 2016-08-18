@@ -263,7 +263,7 @@ module BetterShow
       arr = []
       temp_str = str.dup
       until temp_str.empty?
-        arr << temp_str.slice!(0..chunk_size)
+        arr << temp_str.slice!(0...chunk_size)
       end
       arr
     end
