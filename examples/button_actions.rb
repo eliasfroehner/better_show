@@ -2,8 +2,9 @@
 
 require 'better_show'
 
-ctx = BetterShow::ScreenContext.new(port: "/dev/ttyUSB1", buffered: false)
+ctx = BetterShow::ScreenContext.new(port: "/dev/ttyUSB0", buffered: false)
 ctx.erase_screen
+ctx.set_rotation(BetterShow::Screen::ROTATION_NORTH)
 
 loop {
   ctx.on_button_0_pressed do
