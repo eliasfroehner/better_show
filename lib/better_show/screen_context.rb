@@ -1,3 +1,5 @@
+require 'rubyserial'
+
 module BetterShow
   # Implementation of ANSI/VT100 commands => http://odroid.com/dokuwiki/doku.php?id=en:show_using
   # Some code logic used from https://github.com/Matoking/SHOWtime/blob/master/context.py
@@ -5,20 +7,18 @@ module BetterShow
   class ScreenContext
     include BetterShow
 
-    class NoConnectionError < RuntimeError
-    end
-
     class ColorError < RuntimeError
     end
 
-    attr_accessor :device_port
+    attr_accessor :device
     attr_accessor :buffered_write
     attr_reader :buffer
 
     # @param port Serialport
     # @param buffered All functions will be buffered => use flush to transmit to device
     def initialize(port: "/dev/ttyUSB0", buffered: true)
-      @device_port = port
+      @device = Serial.new port, 500000, 8
+
       @buffered_write = buffered
       @buffer = []
 
@@ -53,11 +53,13 @@ module BetterShow
     end
 
     # Disconnect to ODROID-SHOW
-    def reset!
-      reset_lcd
+    def restore_defaults
       set_text_size(2)
-      set_rotation(1)
+      set_rotation(Screen::ROTATION_NORTH)
       carriage_return
+      set_backlight_brightness_pwm(255)
+      set_foreground_color(:white)
+      set_background_color(:black)
       flush! if buffered_write
     end
 
@@ -242,14 +244,12 @@ module BetterShow
 
     # @param str Commandsequence (if nil buffer will be written)
     def write_to_device!(str=nil)
-      raise NoConnectionError, "You need to connect to device before transmitting data!" unless File.exist? @device_port
-
       command_str = str ? str : buffer
       if command_str.kind_of? String
-        File.write(@device_port, command_str)
+        @device.write command_str
       else
         command_str.each do |command|
-          File.write(@device_port, command)
+          @device.write command
           sleep(command.length * 0.0045)
         end
         clear_buffer!
