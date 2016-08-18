@@ -97,12 +97,12 @@ module BetterShow
     # Erase specified amount of rows starting from a specified row
     def erase_rows(start=0, rows=10)
       cursor_to_home
-      (0..start).each do
+      (0...start).each do
         linebreak
       end
 
       columns = get_columns
-      (start..rows).each do
+      (start...rows).each do
         write_raw_sequence("".ljust(get_columns))
       end
     end
@@ -110,18 +110,18 @@ module BetterShow
     # Returns the amount of columns, depending on the current text size
     def get_columns
       if @orientation == Screen::HORIZONTAL
-        Screen::WIDTH / (@text_size * 6)
-      else
         Screen::HEIGHT / (@text_size * 6)
+      else
+        Screen::WIDTH / (@text_size * 6)
       end
     end
 
     # Returns the amount of rows, depending on the current text size
     def get_rows
       if @orientation == Screen::HORIZONTAL
-        Screen::HEIGHT / (@text_size * 8)
-      else
         Screen::WIDTH / (@text_size * 8)
+      else
+        Screen::HEIGHT / (@text_size * 8)
       end
     end
 
@@ -247,10 +247,11 @@ module BetterShow
       command_str = str ? str : buffer
       if command_str.kind_of? String
         @device.write command_str
+        sleep(command_str.length * 0.009)
       else
         command_str.each do |command|
           @device.write command
-          sleep(command.length * 0.0045)
+          sleep(command.length * 0.009)
         end
         clear_buffer!
       end
