@@ -10,6 +10,7 @@ module BetterShow
     class ColorError < RuntimeError
     end
 
+    # General
     attr_accessor :device
     attr_accessor :buffered_write
     attr_reader :buffer
@@ -23,12 +24,27 @@ module BetterShow
       @buffer = []
 
       @characters_on_current_row = 0
-      @orientation = Screen::VERTICAL
+      @orientation = Screen::HORIZONTAL
       @text_size = 2
       @foreground_color = :white
       @background_color = :black
 
+      # on button callbacks
+      @button_0_pressed_callback = nil
+      @button_1_pressed_callback = nil
+      @button_2_pressed_callback = nil
+
+      @button_0_released_callback = nil
+      @button_1_released_callback = nil
+      @button_2_released_callback = nil
+
+      @callback_thread = nil
+
+      # Create dynamic functions
       create_vt100_functions!
+
+      # Create button event callbacks
+      create_button_events!
     end
 
     def create_vt100_functions!
@@ -45,6 +61,15 @@ module BetterShow
 
       define_vt100_function :save_cursor_position, "\e[s"
       define_vt100_function :restore_cursor_position, "\e[u"
+    end
+
+    def create_button_events!
+      define_button_event :button_0, :pressed
+      define_button_event :button_0, :released
+      define_button_event :button_1, :pressed
+      define_button_event :button_1, :released
+      define_button_event :button_2, :pressed
+      define_button_event :button_2, :released
     end
 
     # Used in tests for comparing command sequence
@@ -236,6 +261,27 @@ module BetterShow
       @buffer.clear if buffered_write
     end
 
+    # CALLBACKS
+    # Starts thread if not started
+    # Thread looks every 200 ms for an button event send via serial port
+    def start_button_event_thread
+      unless @callback_thread
+        @callback_thread = Thread.new do
+          while true
+            button_state = @device.read(2)
+            if button_state.length == 2
+              button = Button::BUTTON_NAME_MAP[button_state[0]]
+              event = Button::BUTTON_EVENT_NAME_MAP[button_state[1]]
+
+              callback = instance_variable_get("@#{button}_#{event}_callback")
+              callback.call if callback
+            end
+            sleep(0.2)
+          end
+        end
+      end
+    end
+
     # DEVICE FUNCTIONS
     # Flushes buffer => writes to device
     def flush!
@@ -258,7 +304,7 @@ module BetterShow
     end
 
     private
-    # SPlits string into chunks => ["abcd", "efgh", "123"]
+    # Splits string into chunks => ["abcd", "efgh", "123"]
     def split_string_into_chunks(str, chunk_size)
       arr = []
       temp_str = str.dup
@@ -272,6 +318,15 @@ module BetterShow
     def define_vt100_function(function_name, sequence)
       define_singleton_method(function_name) do
         write_raw_sequence(sequence)
+      end
+    end
+
+    # defines button event callback and expects a block
+    # method name like on_button_0_pressed
+    def define_button_event(button, event)
+      define_singleton_method("on_#{button.to_s}_#{event.to_s}") do |&block|
+        self.instance_variable_set("@#{button.to_s}_#{event.to_s}_callback", block)
+        start_button_event_thread
       end
     end
   end
