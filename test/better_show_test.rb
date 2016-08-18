@@ -7,8 +7,8 @@ class BetterShowTest < Minitest::Test
   end
 
   def test_initialize
-    @ctx = BetterShow::ScreenContext.new(port: "/dev/ttyUSB1", buffered: false)
-    assert_equal "/dev/ttyUSB1", @ctx.device_port
+    @ctx = BetterShow::ScreenContext.new(port: "/dev/ttyUSB0", buffered: false)
+    assert_kind_of Serial, @ctx.device
     assert_equal false, @ctx.buffered_write
     assert_equal "", @ctx.virtual_device
   end
@@ -16,20 +16,20 @@ class BetterShowTest < Minitest::Test
   def test_get_columns
     @ctx = BetterShow::ScreenContext.new
 
-    assert_equal 26, @ctx.get_columns
+    assert_equal 20, @ctx.get_columns
   end
 
   def test_get_rows
     @ctx = BetterShow::ScreenContext.new
 
-    assert_equal 15, @ctx.get_rows
+    assert_equal 20, @ctx.get_rows
   end
 
   def test_erase_rows
     @ctx = BetterShow::ScreenContext.new
     @ctx.erase_rows
 
-    assert_equal 301, @ctx.virtual_device.size
+    assert_equal 213, @ctx.virtual_device.size
   end
 
   def test_write_text
@@ -45,7 +45,7 @@ class BetterShowTest < Minitest::Test
     @ctx.set_background_color(:white)
     @ctx.write_line("Hello World")
 
-    assert_equal 36, @ctx.virtual_device.size # 26 Columns + 10 bytes color codes
+    assert_equal 30, @ctx.virtual_device.size # 26 Columns + 10 bytes color codes
   end
 
   def test_set_foreground_color
@@ -179,7 +179,7 @@ class BetterShowTest < Minitest::Test
     @ctx = BetterShow::ScreenContext.new
     @ctx.set_cursor_position(1, 2)
 
-    assert_equal "\e[1;P2H", @ctx.virtual_device
+    assert_equal "\e[1;2H", @ctx.virtual_device
   end
 
   def test_set_backlight_brightness_pwm
@@ -221,7 +221,7 @@ class BetterShowTest < Minitest::Test
     @ctx = BetterShow::ScreenContext.new
     @ctx.draw_dot(1, 2)
 
-    assert_equal "\e[1;P2x", @ctx.virtual_device
+    assert_equal "\e[1;2x", @ctx.virtual_device
   end
 
   def test_draw_image
