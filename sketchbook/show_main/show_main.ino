@@ -41,15 +41,15 @@
 
 #define SERIAL_RX_BUFFER_SIZE 64
 
-// button 0 status
+// button 0 events
 #define BTN0_PRESSED "0P"
 #define BTN0_RELEASED "0R"
 
-// button 1 status
+// button 1 events
 #define BTN1_PRESSED "1P"
 #define BTN1_RELEASED "1R"
 
-// button 2 status
+// button 2 events
 #define BTN2_PRESSED "2P"
 #define BTN2_RELEASED "2R"
 
