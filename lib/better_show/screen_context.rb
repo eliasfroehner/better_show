@@ -267,7 +267,7 @@ module BetterShow
     def start_button_event_thread
       unless @callback_thread
         @callback_thread = Thread.new do
-          while true
+          loop {
             button_state = @device.read(2)
             if button_state.length == 2
               button = Button::BUTTON_NAME_MAP[button_state[0]]
@@ -277,7 +277,7 @@ module BetterShow
               callback.call if callback
             end
             sleep(0.2)
-          end
+          }
         end
       end
     end
