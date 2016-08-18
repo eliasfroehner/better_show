@@ -47,7 +47,7 @@ module BetterShow
       define_vt100_function :restore_cursor_position, "\e[u"
     end
 
-    # Used in tests for compraing command sequence
+    # Used in tests for comparing command sequence
     def virtual_device
       buffer.join
     end
