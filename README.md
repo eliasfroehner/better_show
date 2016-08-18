@@ -29,14 +29,14 @@ And then execute:
 ```ruby
 require 'better_show'
 
-@ctx = BetterShow::ScreenContext.new
+ctx = BetterShow::ScreenContext.new
 
-@ctx.erase_screen
-@ctx.set_rotation(BetterShow::Screen::ROTATION_NORTH)
-@ctx.set_background_color(:black)
-@ctx.set_foreground_color(:red)
-@ctx.write_line("Hello World!")
-@ctx.flush!
+ctx.erase_screen
+ctx.set_rotation(BetterShow::Screen::ROTATION_NORTH)
+ctx.set_background_color(:black)
+ctx.set_foreground_color(:red)
+ctx.write_line("Hello World!")
+ctx.flush!
 ```
 ##### If you want use the button events, you have to compile the custom firmware located at the sketchbook directory.
 ##### For installing follow the [Guide](http://odroid.com/dokuwiki/doku.php?id=en:show_setting)
