@@ -27,8 +27,13 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "rubyserial", "~> 0.4"
 
-
   spec.add_development_dependency "bundler", "~> 1.11"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "minitest", "~> 5.0"
+
+  # used for examples
+  spec.add_development_dependency "sys-uname", "~> 1.0"
+  spec.add_development_dependency "sys-filesystem", "~> 1.0"
+  spec.add_development_dependency "net-ping", "~> 2.0"
+  spec.add_development_dependency "usagewatch", "~> 0.0.7"
 end
