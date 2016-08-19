@@ -293,11 +293,11 @@ module BetterShow
       command_str = str ? str : buffer
       if command_str.kind_of? String
         @device.write command_str
-        sleep(command_str.length * 0.009)
+        sleep(command_str.length * 0.006)
       else
         command_str.each do |command|
           @device.write command
-          sleep(command.length * 0.009)
+          sleep(command.length * 0.006)
         end
         clear_buffer!
       end
