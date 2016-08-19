@@ -16,9 +16,9 @@ def main
   mount_path_2 = "/home"
   mount_path_3 = "/bin"
 
-  mount_path_1 = $1 if $1
-  mount_path_2 = $2 if $2
-  mount_path_3 = $3 if $3
+  mount_path_1 = ARGV[0] if ARGV[0]
+  mount_path_2 = ARGV[1] if ARGV[1]
+  mount_path_3 = ARGV[2] if ARGV[2]
 
   mount_path = mount_path_1
 
@@ -110,7 +110,7 @@ def print_resources(ctx)
   print_info(ctx, "Memory: ", "#{mem_usage}% (#{mem_used.round(1)}G/#{mem_max.round(1)}G)", :white, mem_color)
 
   # Internet access
-  internet_check = Net::Ping::HTTP.new('http://www.google.com', 80, 1)
+  internet_check = Net::Ping::HTTP.new('http://www.google.com')
   internet_state = internet_check.ping?
   print_info(ctx, "Internet access: ", internet_state ? "yes" : "no", :white, internet_state ? :green : :red)
 end
