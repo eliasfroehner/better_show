@@ -101,7 +101,7 @@ def print_resources(ctx)
   mem_stats = IO.popen(["free", "-m"]).read.split("\n")[1].split("        ")
   mem_max = (mem_stats[1].to_f / 1024)
   mem_used = (mem_stats[2].to_f / 1024)
-  mem_usage = (mem_used / mem_max).round(2) * 100
+  mem_usage = ((mem_used / mem_max) * 100).round(2)
 
   cpu_color = get_resource_usage_color(cpu_usage)
   mem_color = get_resource_usage_color(mem_usage)
