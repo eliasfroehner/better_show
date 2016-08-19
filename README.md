@@ -25,6 +25,7 @@ And then execute:
     $ bundle
 
 ## Usage
+Ruby version: >= 2
 
 ```ruby
 require 'better_show'
