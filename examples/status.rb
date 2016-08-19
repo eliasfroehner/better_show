@@ -110,7 +110,7 @@ def print_resources(ctx)
   print_info(ctx, "Memory: ", "#{mem_usage}% (#{mem_used.round(1)}G/#{mem_max.round(1)}G)", :white, mem_color)
 
   # Internet access
-  internet_check = Net::Ping::HTTP.new('http://www.google.com')
+  internet_check = Net::Ping::HTTP.new('http://www.google.com', 80, 1)
   internet_state = internet_check.ping?
   print_info(ctx, "Internet access: ", internet_state ? "yes" : "no", :white, internet_state ? :green : :red)
 end
