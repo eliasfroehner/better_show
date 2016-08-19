@@ -106,7 +106,7 @@ module BetterShow
     # overlapping text
     # @param str String to write_raw_sequence
     def write_line(str)
-      write_text(str.ljust(get_columns))
+      write_text(str.ljust(get_columns - @characters_on_current_row))
     end
 
     # Writes string to buffer if buffered mode, else directly to device
