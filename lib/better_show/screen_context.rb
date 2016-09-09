@@ -128,7 +128,7 @@ module BetterShow
 
       columns = get_columns
       (start...rows).each do
-        write_raw_sequence("".ljust(get_columns))
+        write_raw_sequence("".ljust(get_columns+1))
       end
     end
 
